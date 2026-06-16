@@ -446,9 +446,6 @@ async function runRound1(
 
   // Wait until Ronda 1 is actually active (handles Preapertura)
   await waitForRoundBySchedule(page, 1, role);
-  // Reload to ensure the trading UI is fully rendered before first bid
-  await reloadAndSettle(page);
-  log(`Página recargada — listo para posturas Ronda 1.`);
 
   const intervalMs = params.iterations > 1 ? Math.floor((durationMin * 60_000) / params.iterations) : 0;
   log(`Ronda 1 — ${params.iterations} posturas en ${durationMin}min (intervalo ${intervalMs / 1000}s)`);
@@ -573,9 +570,6 @@ async function runRound2Plus(
   if (params.iterations === 0) { log(`Ronda ${roundNumber}: iteraciones=0, se omite.`); return; }
 
   await waitForRoundBySchedule(page, roundNumber);
-  // Reload to ensure edit icons are fully rendered before first update
-  await reloadAndSettle(page);
-  log(`Página recargada — listo para actualizaciones Ronda ${roundNumber}.`);
 
   const intervalMs = params.iterations > 1 ? Math.floor((durationMin * 60_000) / params.iterations) : 0;
   log(`Ronda ${roundNumber} — ${params.iterations} actualizaciones en ${durationMin}min (intervalo ${intervalMs / 1000}s)`);

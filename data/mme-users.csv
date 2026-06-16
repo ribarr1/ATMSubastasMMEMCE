@@ -1,5 +1,5 @@
 role,username,password,active,r1_iterations,r1_min,r1_max,r2_iterations,r2_min,r2_max,r3_iterations,r3_min,r3_max
-buyer,adminempconmce@yopmail.com,Bolsa1234*,true,5,10,300,5,301,400,0,0,0
-buyer,adminempconmce01@yopmail.com,Bolsa1234*,true,5,10,300,5,301,400,0,0,0
-seller,adminempconmceSQA01@yopmail.com,Bolsa1234*,true,5,800,900,5,350,700,0,0,0
-seller,adminempconmceSQA02@yopmail.com,Bolsa1234*,true,5,800,900,5,350,700,0,0,0
+buyer,adminempconmce@yopmail.com,Bolsa1234*,true,10,10,300,5,301,400,0,0,0
+buyer,adminempconmce01@yopmail.com,Bolsa1234*,true,12,10,300,5,301,400,0,0,0
+seller,adminempconmceSQA01@yopmail.com,Bolsa1234*,true,15,800,900,5,350,700,0,0,0
+seller,adminempconmceSQA02@yopmail.com,Bolsa1234*,true,11,800,900,5,350,700,0,0,0
