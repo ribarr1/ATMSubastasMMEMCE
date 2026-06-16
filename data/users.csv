@@ -1,0 +1,4 @@
+role,company,profile,username,password,product,roundtable_code,iterations,minutes,min_amount,max_amount,active
+seller,FhanorB,Negociador,negociadorafiliadomcefb@yopmail.com,Bolsa1234*,SM2606051,359,10,2,750,900,true
+buyer,FhanorA,Negociador,negociadorafiliadomcefbl@yopmail.com,Bolsa1234*,SM2606051,359,10,2,500,700,true
+

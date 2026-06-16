@@ -1,0 +1,24 @@
+{
+  "name": "atmsubastas",
+  "version": "1.0.0",
+  "description": "POC de automatizacion y concurrencia para subastas MCE con Playwright",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:login": "playwright test tests/auth-login.spec.ts",
+    "test:concurrency": "playwright test tests/concurrency.spec.ts",
+    "test:registration": "playwright test tests/registration-flow.spec.ts",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "csv-parse": "^6.2.1"
+  }
+}
