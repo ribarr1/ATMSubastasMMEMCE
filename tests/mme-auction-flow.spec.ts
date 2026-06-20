@@ -602,9 +602,15 @@ async function runRound2Plus(
       break;
     }
 
-    const iconIndex = i % iconCount;
+    // Re-contar íconos en cada iteración — el DOM cambia tras cada reload
     const iconsNow = page.locator("table tbody tr mat-icon, table tr[role='row'] mat-icon").filter({ hasText: "edit" });
-    await iconsNow.nth(iconIndex).click();
+    const currentIconCount = await iconsNow.count();
+    if (currentIconCount === 0) {
+      log(`Ronda ${roundNumber}: sin lápices disponibles en iteración ${i + 1} — fin anticipado.`);
+      break;
+    }
+    const iconIndex = i % currentIconCount;
+    await iconsNow.nth(iconIndex).click({ timeout: 8_000 });
     await page.waitForTimeout(500);
 
     const dialog = page.locator("mat-dialog-container").first();
@@ -663,6 +669,82 @@ async function runRound2Plus(
   log(`Ronda ${roundNumber} completada para ${role}.`);
 }
 
+// ── Wait for publication / result ─────────────────────────────────────────────
+
+/**
+ * Espera a que el schedule entre en una fase de Publicación o Impugnación,
+ * luego escanea la página buscando el mensaje de resultado de la subasta
+ * (adjudicado, no adjudicado, rueda desierta, etc.).
+ * Máx espera: 30 minutos.
+ */
+async function waitForPublicationAndResult(page: Page): Promise<void> {
+  const MAX_WAIT_MS  = 30 * 60_000;
+  const POLL_MS      = 10_000;
+  const RESULT_KEYWORDS = [
+    /adjudicad/i, /desierta/i, /no adjudicad/i, /publicaci[oó]n/i,
+    /resultado/i, /impugnaci[oó]n/i,
+  ];
+
+  const isPublicationPhase = async (): Promise<boolean> => {
+    const schedule = await parseAuctionSchedule(page);
+    const now = Date.now();
+    for (const phase of schedule) {
+      if (/publicaci[oó]n|impugnaci[oó]n/i.test(phase.name)) {
+        const idx = schedule.indexOf(phase);
+        const nextStart = idx + 1 < schedule.length ? schedule[idx + 1].startTime.getTime() : Infinity;
+        if (now >= phase.startTime.getTime() && now < nextStart) return true;
+      }
+    }
+    return false;
+  };
+
+  const findResultText = async (): Promise<string | null> => {
+    // Buscar en diálogos primero, luego en el body
+    const candidates = [
+      page.locator("mat-dialog-container, .modal-content, .alert, snack-bar-container, .card-body"),
+      page.locator("body"),
+    ];
+    for (const loc of candidates) {
+      const text = await loc.first().innerText().catch(() => "");
+      for (const kw of RESULT_KEYWORDS) {
+        const match = text.match(new RegExp(`.{0,60}${kw.source}.{0,60}`, "i"));
+        if (match) return match[0].trim();
+      }
+    }
+    return null;
+  };
+
+  log("Esperando fase de Publicación/Impugnación para ver resultado...");
+  const waitStart = Date.now();
+
+  while (Date.now() - waitStart < MAX_WAIT_MS) {
+    await reloadAndSettle(page);
+
+    const result = await findResultText();
+    if (result) {
+      log(`\n🏁 RESULTADO SUBASTA: ${result}`);
+      // Esperar unos segundos más para capturar el estado final
+      await page.waitForTimeout(3_000);
+      return;
+    }
+
+    const inPubPhase = await isPublicationPhase();
+    const elapsed = Math.round((Date.now() - waitStart) / 1000);
+    const schedule = await parseAuctionSchedule(page);
+    const str = schedule.map((p) => `${p.name}@${p.startTime.toLocaleTimeString("es-CO")}`).join(" | ");
+
+    if (inPubPhase) {
+      log(`  [Publicación] ${elapsed}s — aún sin mensaje de resultado | ${str}`);
+    } else {
+      log(`  [Esperando publicación] ${elapsed}s | ${str}`);
+    }
+
+    await page.waitForTimeout(POLL_MS).catch(() => {});
+  }
+
+  log("⚠ Timeout esperando resultado — la subasta pudo haber terminado sin mensaje visible.");
+}
+
 // ── Full auction orchestrator ─────────────────────────────────────────────────
 
 async function runFullAuction(page: Page, role: "buyer" | "seller", user: MmeUser): Promise<void> {
@@ -710,6 +792,9 @@ async function runFullAuction(page: Page, role: "buyer" | "seller", user: MmeUse
       if (!nextRoundReady) log(`Iniciando sondeo formal de Ronda ${nextRound}...`);
     }
   }
+
+  // Esperar fase de Publicación/Impugnación y mensaje de resultado
+  await waitForPublicationAndResult(page);
 
   log(`\n=== Subasta MME finalizada para ${role} (${user.username}) ===\n`);
 }
